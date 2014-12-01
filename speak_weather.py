@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import datetime
 import os
 
@@ -26,9 +28,15 @@ def forecast_to_mp3(weather, save_location, lang='en'):
     @param lang Language to speak in
     @type str
     """
-    for day in range(5):
+    today_idx = tomorrow_idx = 0
+
+    for day in range(3):
         f = weather['forecast'][day]
         f_date = datetime.datetime.strptime(f['date'], "%d %b %Y")
+
+        if f_date.date() == datetime.datetime.today().date():
+          today_idx = day
+
         forecast_str = (
             "The forecast for %s, %s %s "
             "is %s with a high of %s and a low of %s"
@@ -37,6 +45,7 @@ def forecast_to_mp3(weather, save_location, lang='en'):
         tts = gtts.gTTS(text=forecast_str, lang=lang)
         tts.save(os.path.join(save_location, ("forecast%d.mp3" % day)))
 
+    return (today_idx, today_idx + 1)
 
 def play_forecast(sonos_ip, play_location, day):
     sonos = soco.SoCo(sonos_ip)
@@ -44,9 +53,11 @@ def play_forecast(sonos_ip, play_location, day):
 
 if (__name__ == "__main__"):
     weather = get_weather()
-    forecast_to_mp3(weather, config.FORECAST_SAVE_MP3_LOCATION)
+    (today_idx, tomorrow_idx) = forecast_to_mp3(weather, config.FORECAST_SAVE_MP3_LOCATION)
     # After 6pm, assume you want tomorrow's forecast
     if datetime.datetime.now().hour > 18:
-        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, 1)
+        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, tomorrow_idx)
     else:
-        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, 0)
+        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, today_idx)
+
+    print today_idx
