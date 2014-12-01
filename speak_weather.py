@@ -45,4 +45,8 @@ def play_forecast(sonos_ip, play_location, day):
 if (__name__ == "__main__"):
     weather = get_weather()
     forecast_to_mp3(weather, config.FORECAST_SAVE_MP3_LOCATION)
-    play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, 0)
+    # After 6pm, assume you want tomorrow's forecast
+    if datetime.datetime.now().hour > 18:
+        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, 1)
+    else:
+        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, 0)
