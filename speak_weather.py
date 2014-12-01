@@ -59,5 +59,3 @@ if (__name__ == "__main__"):
         play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, tomorrow_idx)
     else:
         play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, today_idx)
-
-    print today_idx
