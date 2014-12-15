@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import argparse
 import datetime
 import os
 
@@ -34,28 +35,39 @@ def forecast_to_mp3(weather, save_location, lang='en'):
         f = weather['forecast'][day]
         f_date = datetime.datetime.strptime(f['date'], "%d %b %Y")
 
-        if f_date.date() == datetime.datetime.today().date():
-          today_idx = day
+        if f_date.date() >= datetime.datetime.today().date():
+            forecast_str = (
+                "The forecast for %s, %s %s "
+                "is %s with a high of %s and a low of %s"
+                % (f_date.strftime("%A"), f_date.strftime("%B"), f_date.day,
+                   f['text'], f['high'], f['low']))
+            tts = gtts.gTTS(text=forecast_str, lang=lang)
+            tts.save(os.path.join(save_location, ("forecast%d.mp3" % day)))
 
-        forecast_str = (
-            "The forecast for %s, %s %s "
-            "is %s with a high of %s and a low of %s"
-            % (f_date.strftime("%A"), f_date.strftime("%B"), f_date.day,
-               f['text'], f['high'], f['low']))
-        tts = gtts.gTTS(text=forecast_str, lang=lang)
-        tts.save(os.path.join(save_location, ("forecast%d.mp3" % day)))
 
-    return (today_idx, today_idx + 1)
-
-def play_forecast(sonos_ip, play_location, day):
+def play_forecast(sonos_ip, play_location):
+    """
+    @param sonos_ip IP address of Sonos Player
+    @type str
+    @param play_location Location of forecast mp3s
+    @type str
+    """
     sonos = soco.SoCo(sonos_ip)
+    # If it's after 6pm local time, play tomorrow's forecast
+    day = int(datetime.datetime.now().hour < 18)
     sonos.play_uri(os.path.join(play_location, ("forecast%d.mp3" % day)))
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--fetch', action='store_const', const=True)
+    parser.add_argument('--speak', action='store_const', const=True)
+    return parser.parse_args()
+
 if (__name__ == "__main__"):
-    weather = get_weather()
-    (today_idx, tomorrow_idx) = forecast_to_mp3(weather, config.FORECAST_SAVE_MP3_LOCATION)
-    # After 6pm, assume you want tomorrow's forecast
-    if datetime.datetime.now().hour > 18:
-        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, tomorrow_idx)
-    else:
-        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION, today_idx)
+    args = parse_args()
+    if args.fetch:
+        weather = get_weather()
+        forecast_to_mp3(weather, config.FORECAST_SAVE_MP3_LOCATION)
+    if args.speak:
+        play_forecast(config.SONOS_IP, config.FORECAST_PLAY_MP3_LOCATION)
