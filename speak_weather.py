@@ -31,7 +31,7 @@ def forecast_to_mp3(weather, save_location, lang='en'):
     """
     today_idx = tomorrow_idx = 0
 
-    for day in range(3):
+    for day in range(2):
         f = weather['forecast'][day]
         f_date = datetime.datetime.strptime(f['date'], "%d %b %Y")
 
@@ -54,7 +54,7 @@ def play_forecast(sonos_ip, play_location):
     """
     sonos = soco.SoCo(sonos_ip)
     # If it's after 6pm local time, play tomorrow's forecast
-    day = int(datetime.datetime.now().hour < 18)
+    day = int(datetime.datetime.now().hour > 18)
     sonos.play_uri(os.path.join(play_location, ("forecast%d.mp3" % day)))
 
 
