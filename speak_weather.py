@@ -3,6 +3,7 @@
 import argparse
 import datetime
 import os
+import requests
 import time
 
 import gtts
@@ -17,6 +18,16 @@ def get_weather():
     woeid = client.fetch_woeid(config.WEATHER_LOCATION)
     weather = client.fetch_weather(woeid)
     return weather
+
+
+def get_weather_new():
+    data = {"q": 'select * from weather.forecast where woeid in (select woeid from geo.places(1) where text="%s")' % config.WEATHER_LOCATION,
+            "format": "json"}
+    resp = requests.post('https://query.yahooapis.com/v1/public/yql', data=data)
+    jdata = resp.json()
+    weather = jdata['query']['results']['channel']['item']
+    return weather
+
 
 def forecast_to_txt(weather, save_location):
     for day in range(2):
@@ -86,7 +97,7 @@ def parse_args():
 if (__name__ == "__main__"):
     args = parse_args()
     if args.text:
-        weather = get_weather()
+        weather = get_weather_new()
         forecast_to_txt(weather, config.FORECAST_SAVE_TXT_LOCATION)
     if args.fetch:
         weather = get_weather()
